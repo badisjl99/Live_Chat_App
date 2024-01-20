@@ -126,15 +126,26 @@
 }
 
         
-        function initEventListeners() {
-            const messageInput = document.getElementById('messageInputId');
-            const sendButton = document.getElementById('sendButton');
-    
-            messageInput.addEventListener('input', toggleSendButton);
-    
-            // Set initial state
-            toggleSendButton();
-        }
+function initEventListeners() {
+  const messageInput = document.getElementById('messageInputId');
+  const sendButton = document.getElementById('sendButton');
+
+  // Disable button initially
+  sendButton.disabled = true;
+
+  messageInput.addEventListener('input', () => {
+    // Enable the button if it's currently disabled and the input is not empty
+    if (sendButton.disabled && messageInput.value.trim()) {
+      sendButton.disabled = false;
+
+      // Remove the event listener to prevent further changes
+      messageInput.removeEventListener('input', arguments.callee);
+    }
+  });
+}
+
+initEventListeners();
+
     
         initEventListeners();
     </script>
@@ -149,32 +160,41 @@ function playAudio(audioId) {
 }
 
 
-        const socket = io();
+const socket = io();
+    let username;
+    let color;
 
-        let username;
-        let color;
+    socket.on('assign user info', (userInfo) => {
+        username = userInfo.username;
+        color = userInfo.color;
+    });
 
-        socket.on('assign user info', (userInfo) => {
-            username = userInfo.username;
-            color = userInfo.color;
+    socket.on('update connected users', (users) => {
+        const connectedUsersList = document.getElementById('connectedUsersList');
+        connectedUsersList.innerHTML = '';
+
+        for (const user of users) {
+            const userItem = document.createElement('li');
+            userItem.className = 'list-group-item';
+            userItem.textContent = user.username;
+            userItem.style.color = user.color;
+            connectedUsersList.appendChild(userItem);
+        }
+
+        const onlineUsersCount = document.getElementById('onlineUsersCount');
+        onlineUsersCount.textContent = `Online Users: ${users.length}`;
+    });
+
+    socket.on('connectionRejected', () => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Rejected',
+            text: 'You are already connected. Please close the existing tab/window.',
+            customClass: {
+                popup: 'small-swal',
+            },
         });
-
-        socket.on('update connected users', (users) => {
-            const connectedUsersList = document.getElementById('connectedUsersList');
-            connectedUsersList.innerHTML = '';
-
-            for (const user of users) {
-                const userItem = document.createElement('li');
-                userItem.className = 'list-group-item';
-                userItem.textContent = user.username;
-                userItem.style.color = user.color;
-                connectedUsersList.appendChild(userItem);
-            }
-
-            const onlineUsersCount = document.getElementById('onlineUsersCount');
-            onlineUsersCount.textContent = `Online Users: ${users.length}`;
-        });
-
+    });
         socket.on('chat message', (data) => {
 
             playAudio('newMessageAudio');

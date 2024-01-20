@@ -36,33 +36,41 @@ function generateUniqueColor() {
 }
 
 io.on('connection', (socket) => {
-    console.log('A user connected');
+  console.log('A user connected');
 
-    const randomNameIndex = Math.floor(Math.random() * randomNames.length);
-    const username = randomNames[randomNameIndex];
-    
-    const color = generateUniqueColor();
+  const randomNameIndex = Math.floor(Math.random() * randomNames.length);
+  const username = randomNames[randomNameIndex];
 
-    connectedUsers.set(socket.id, { username, color });
+  const color = generateUniqueColor();
 
-    io.emit('update connected users', Array.from(connectedUsers.values()));
+  const clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
 
-    io.emit('user connected', { username, color });
+  if (connectedUsers.has(clientIp)) {
 
-    socket.emit('assign user info', { username, color });
+      socket.emit('connectionRejected');
+      socket.disconnect(true);
+      return;
+  }
 
-    socket.on('chat message', (data) => {
-        io.emit('chat message', { ...data, sender: username, color, date: new Date().toISOString() });
-    });
+  connectedUsers.set(clientIp, { username, color });
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
+  io.emit('update connected users', Array.from(connectedUsers.values()));
 
-        connectedUsers.delete(socket.id);
-        io.emit('update connected users', Array.from(connectedUsers.values()));
+  io.emit('user connected', { username, color });
 
-        io.emit('user disconnected', { username, color });
-    });
+  socket.emit('assign user info', { username, color });
+
+  socket.on('chat message', (data) => {
+      io.emit('chat message', { ...data, sender: username, color, date: new Date().toISOString() });
+  });
+
+  socket.on('disconnect', () => {
+
+      connectedUsers.delete(clientIp);
+      io.emit('update connected users', Array.from(connectedUsers.values()));
+
+      io.emit('user disconnected', { username, color });
+  });
 });
   
 
