@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const multer = require('multer');
 
 const app = express();
 const server = http.createServer(app);
@@ -10,6 +11,9 @@ const io = socketIo(server);
 const port = 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
   const randomNames = [
     'ShadowLion', 'SilverPhoenix', 'CrimsonDragon', 'GoldenFalcon', 'EmeraldTiger',
@@ -34,6 +38,8 @@ function generateUniqueColor() {
     const availableColors = randomColors.filter(color => !existingColors.has(color));
     return availableColors[Math.floor(Math.random() * availableColors.length)];
 }
+
+
 
 io.on('connection', (socket) => {
   console.log('A user connected');
@@ -74,7 +80,13 @@ io.on('connection', (socket) => {
 });
   
 
-  
+app.post('/upload', upload.single('image'), (req, res) => {
+  const imageData = req.file.buffer.toString('base64');
+  io.emit('image message', { imageData, sender: username, color, date: new Date().toISOString() });
+  res.sendStatus(200);
+});
+
+
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
