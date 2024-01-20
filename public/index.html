@@ -83,6 +83,9 @@
 </head>
 
 <body>
+
+
+    
     <div class="container-fluid">
         <div class="chat-container">
             <div id="displayContent">
@@ -91,9 +94,10 @@
             </div>
 
             <div class="input-container">
-                <input class="form-control" type="text" name="messageInput" id="messageInputId"
-                    placeholder="Type Your Message." required>
-                <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                <input class="form-control" type="text" name="messageInput" id="messageInputId" placeholder="Type Your Message."
+                required oninput="toggleSendButton()">
+            
+                <button id="sendButton" class="btn btn-primary" onclick="sendMessage()" disabled>Send</button>
             </div>
         </div>
 
@@ -109,8 +113,42 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <audio id="userConnectedAudio" src="./connectedaudio.mp3"></audio>
+    <audio id="userDisconnectedAudio" src="./disconnectedaudio.mp3"></audio>
+    <audio id="newMessageAudio" src="./recievedmessageAudio.mp3"></audio>
 
     <script>
+       function toggleSendButton() {
+    const messageInput = document.getElementById('messageInputId');
+    const sendButton = document.getElementById('sendButton');
+
+    sendButton.disabled = messageInput.value.trim().length === 0;
+}
+
+        
+        function initEventListeners() {
+            const messageInput = document.getElementById('messageInputId');
+            const sendButton = document.getElementById('sendButton');
+    
+            messageInput.addEventListener('input', toggleSendButton);
+    
+            // Set initial state
+            toggleSendButton();
+        }
+    
+        initEventListeners();
+    </script>
+    
+
+    <script>
+
+
+function playAudio(audioId) {
+    const audio = document.getElementById(audioId);
+    audio.play();
+}
+
+
         const socket = io();
 
         let username;
@@ -138,6 +176,9 @@
         });
 
         socket.on('chat message', (data) => {
+
+            playAudio('newMessageAudio');
+
             const { message, sender, color, date } = data;
             const messageList = document.getElementById('messageList');
             const listItem = document.createElement('li');
@@ -165,7 +206,7 @@
 
             messageList.appendChild(listItem);
         });
-
+            
         function sendMessage() {
             const inputValue = document.getElementById('messageInputId').value;
             const currentDate = new Date();
@@ -183,6 +224,8 @@
         }
 
         socket.on('user connected', (user) => {
+            playAudio('userConnectedAudio');
+            
             Swal.fire({
                 title: 'User Connected',
                 text: `${user.username} has joined the chat!`,
@@ -195,6 +238,9 @@
         });
 
         socket.on('user disconnected', (user) => {
+            
+            playAudio('userDisconnectedAudio');
+            
             Swal.fire({
                 icon: 'warning',
                 title: 'User Disconnected',
