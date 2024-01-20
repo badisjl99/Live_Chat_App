@@ -101,7 +101,9 @@
             <h5 class="mt-3 mb-3">Connected Users</h5>
             <ul id="connectedUsersList" class="list-group">
             </ul>
+            <span id="onlineUsersCount" class="mt-3" style="display: block; text-align: center;font-size: 20px;"></span>
         </div>
+        
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
@@ -130,6 +132,9 @@
                 userItem.style.color = user.color;
                 connectedUsersList.appendChild(userItem);
             }
+
+            const onlineUsersCount = document.getElementById('onlineUsersCount');
+            onlineUsersCount.textContent = `Online Users: ${users.length}`;
         });
 
         socket.on('chat message', (data) => {
@@ -148,7 +153,7 @@
 
             const messageSpan = document.createElement('span');
             messageSpan.style.fontSize = 'larger';
-            messageSpan.textContent = `: "${message}"`;
+            messageSpan.textContent = `:  ${message}`;
 
             const dateSpan = document.createElement('span');
             dateSpan.style.float = 'right';
@@ -176,31 +181,31 @@
 
             document.getElementById('messageInputId').value = '';
         }
-        socket.on('user connected', (user) => {
-    Swal.fire({
-     
-      title: 'User Connected',
-      text: `${user.username} has joined the chat!`,
-      position: 'top-end', 
-      showConfirmButton: false,
-      customClass: {
-        popup: 'small-swal', 
-      },
-    });
-  });
 
-  socket.on('user disconnected', (user) => {
-    Swal.fire({
-      icon: 'warning',
-      title: 'User Disconnected',
-      text: `${user.username} has left the chat.`,
-      position: 'top-end', 
-      showConfirmButton: false,
-      customClass: {
-        popup: 'small-swal', 
-      },
-    });
-  });
+        socket.on('user connected', (user) => {
+            Swal.fire({
+                title: 'User Connected',
+                text: `${user.username} has joined the chat!`,
+                position: 'top-end',
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'small-swal',
+                },
+            });
+        });
+
+        socket.on('user disconnected', (user) => {
+            Swal.fire({
+                icon: 'warning',
+                title: 'User Disconnected',
+                text: `${user.username} has left the chat.`,
+                position: 'top-end',
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'small-swal',
+                },
+            });
+        });
 
     </script>
 </body>
