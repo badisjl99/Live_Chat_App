@@ -8,105 +8,40 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.17.0/font/bootstrap-icons.css">
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Arial', sans-serif;
-            background-image: url('./bg-image.jpg');
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center; 
-        }
-        .small-swal {
-            width: 200px; 
-            font-size: 14px; 
-        }
-
-        .container-fluid {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 50px;
-            margin-bottom: 50px;
-        }
-
-        .chat-container {
-            border: 1px solid lightgray;
-            display: flex;
-            flex-direction: column;
-            height: 800px;
-            width: 80%;
-            background-color: white;
-        }
-
-        #displayContent {
-            border: 1px solid lightgray;
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 10px;
-        }
-
-        #messageList {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        #connectedUsersDiv {
-            border: 1px solid lightgray;
-            height: 800px; 
-            overflow-y: auto;
-            padding: 50px;
-            background-color: azure;
-        }
-
-        #connectedUsersList {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .input-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px;
-        }
-
-        .form-control {
-            width: 90%;
-        }
-
-        .sent-image {
-            max-width: 100%;
-            max-height: 200px; /* Adjust as needed */
-            cursor: pointer;
-        }
-    </style>
+    <link rel="stylesheet" href="./style.css">
 </head>
 
-<body>
+<body class="bg-body">
     <div class="container-fluid">
-        <div class="chat-container">
-            <div id="displayContent">
-                <ul id="messageList" class="list-group list-group-flush">
-                </ul>
+        <div class="row align-items-center justify-content-center">
+            <div class="col-lg-10">
+                <div class="chat-container">
+                    <div id="displayContent">
+                        <ul id="messageList" class="list-group list-group-flush">
+                        </ul>
+                    </div>
+
+                    <!-- Inside the <div class="input-container"> element -->
+                    <div class="input-container">
+                        <input class="form-control" type="text" name="messageInput" id="messageInputId"
+                            placeholder="Type Your Message." required oninput="toggleSendButton()">
+                        <input type="file" id="imageInput" accept="image/*" class="form-control btn btn-secondary" style="max-width: 250px;">
+
+                        <button id="sendButton" class="btn btn-primary" onclick="sendMessage()" disabled>Send</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="input-container">
-                <input class="form-control" type="text" name="messageInput" id="messageInputId" placeholder="Type Your Message." required oninput="toggleSendButton()">
-                <input type="file" id="imageInput" accept="image/*">
-                <button id="sendButton" class="btn btn-primary" onclick="sendMessage()" disabled>Send</button>
+            <div class="col-lg-4">
+                <div id="connectedUsersDiv" class="connected-users-div">
+                    <h5 class="mt-3 mb-3">Connected Users</h5>
+                    <ul id="connectedUsersList" class="list-group">
+                    </ul>
+                    <span id="onlineUsersCount" class="mt-3" style="display: block; text-align: center; font-size: 20px;">
+                    </span>
+                </div>
             </div>
-
         </div>
-
-        <div id="connectedUsersDiv">
-            <h5 class="mt-3 mb-3">Connected Users</h5>
-            <ul id="connectedUsersList" class="list-group">
-            </ul>
-            <span id="onlineUsersCount" class="mt-3" style="display: block; text-align: center;font-size: 20px;"></span>
-        </div>
-
     </div>
 
     <!-- Image Modal -->
@@ -131,189 +66,7 @@
     <audio id="userConnectedAudio" src="./connectedaudio.mp3"></audio>
     <audio id="userDisconnectedAudio" src="./disconnectedaudio.mp3"></audio>
     <audio id="newMessageAudio" src="./recievedmessageAudio.mp3"></audio>
-
-
-    <script>
-        function toggleSendButton() {
-            const messageInput = document.getElementById('messageInputId');
-            const imageInput = document.getElementById('imageInput');
-            const sendButton = document.getElementById('sendButton');
-            sendButton.disabled = messageInput.value.trim().length === 0 && imageInput.files.length === 0;
-        }
-    
-        function sendMessage() {
-            const inputValue = document.getElementById('messageInputId').value;
-            const imageInput = document.getElementById('imageInput');
-            const currentDate = new Date();
-    
-            if (imageInput.files.length > 0) {
-                const fileReader = new FileReader();
-                fileReader.onloadend = () => {
-                    const imageData = fileReader.result.split(',')[1];
-                    const messageData = {
-                        message: inputValue,
-                        sender: username,
-                        color: color,
-                        date: currentDate.toISOString(),
-                        image: imageData,
-                    };
-                    socket.emit('chat message', messageData);
-                    document.getElementById('messageInputId').value = '';
-                    imageInput.value = '';
-                };
-                fileReader.readAsDataURL(imageInput.files[0]);
-            } else {
-                const messageData = {
-                    message: inputValue,
-                    sender: username,
-                    color: color,
-                    date: currentDate.toISOString(),
-                };
-                socket.emit('chat message', messageData);
-                document.getElementById('messageInputId').value = '';
-            }
-        }
-    
-        document.getElementById('imageInput').addEventListener('change', () => {
-            toggleSendButton();
-        });
-    
-        function playAudio(audioId) {
-            const audio = document.getElementById(audioId);
-            audio.play();
-        }
-    
-        const socket = io();
-        let username;
-        let color;
-    
-        socket.on('assign user info', (userInfo) => {
-            username = userInfo.username;
-            color = userInfo.color;
-        });
-    
-        socket.on('update connected users', (users) => {
-            const connectedUsersList = document.getElementById('connectedUsersList');
-            connectedUsersList.innerHTML = '';
-    
-            for (const user of users) {
-                const userItem = document.createElement('li');
-                userItem.className = 'list-group-item';
-                userItem.textContent = user.username;
-                userItem.style.color = user.color;
-                connectedUsersList.appendChild(userItem);
-            }
-    
-            const onlineUsersCount = document.getElementById('onlineUsersCount');
-            onlineUsersCount.textContent = `Online Users: ${users.length}`;
-        });
-    
-        socket.on('connectionRejected', () => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Connection Rejected',
-                text: 'You are already connected. Please close the existing tab/window.',
-                customClass: {
-                    popup: 'small-swal',
-                },
-            });
-        });
-    
-        socket.on('chat message', (data) => {
-            playAudio('newMessageAudio');
-            const { message, sender, color, date, image } = data;
-            const messageList = document.getElementById('messageList');
-            const listItem = document.createElement('li');
-            listItem.className = 'list-group-item';
-    
-            const formattedDate = new Date(date);
-            const formattedTime = formattedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-            const senderSpan = document.createElement('span');
-            senderSpan.style.color = color;
-            senderSpan.style.fontWeight = 'bold';
-            senderSpan.textContent = sender;
-    
-            const messageSpan = document.createElement('span');
-            messageSpan.style.fontSize = 'larger';
-            messageSpan.textContent = `:  ${message}`;
-    
-            const dateSpan = document.createElement('span');
-            dateSpan.style.float = 'right';
-            dateSpan.textContent = formattedTime;
-    
-            listItem.appendChild(senderSpan);
-            listItem.appendChild(messageSpan);
-            listItem.appendChild(dateSpan);
-    
-            if (image) {
-                const imageElement = document.createElement('button');
-                imageElement.classList.add('btn', 'btn-light', 'sent-image');
-                imageElement.setAttribute('data-bs-toggle', 'modal');
-                imageElement.setAttribute('data-bs-target', '#imageModal');
-                imageElement.addEventListener('click', () => showImageInModal(image));
-                imageElement.textContent = 'View Image';
-                listItem.appendChild(imageElement);
-            }
-    
-            messageList.appendChild(listItem);
-        });
-    
-        function showImageInModal(imageData) {
-            const previewImage = document.getElementById('previewImage');
-            previewImage.src = `data:image/jpeg;base64,${imageData}`;
-    
-            const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
-            imageModal.show();
-        }
-    
-        function openImageModal(imageData) {
-            const previewImage = document.getElementById('previewImage');
-            previewImage.src = imageData;
-    
-            const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
-            imageModal.show();
-        }
-    
-        function toggleSendButton() {
-            const messageInput = document.getElementById('messageInputId');
-            const imageInput = document.getElementById('imageInput');
-            const sendButton = document.getElementById('sendButton');
-            sendButton.disabled = messageInput.value.trim().length === 0 && imageInput.files.length === 0;
-        }
-    
-        socket.on('user connected', (user) => {
-            playAudio('userConnectedAudio');
-    
-            Swal.fire({
-                title: 'User Connected',
-                text: `${user.username} has joined the chat!`,
-                position: 'top-end',
-                showConfirmButton: false,
-                customClass: {
-                    popup: 'small-swal',
-                },
-            });
-        });
-    
-        socket.on('user disconnected', (user) => {
-    
-            playAudio('userDisconnectedAudio');
-    
-            Swal.fire({
-                icon: 'warning',
-                title: 'User Disconnected',
-                text: `${user.username} has left the chat.`,
-                position: 'top-end',
-                showConfirmButton: false,
-                customClass: {
-                    popup: 'small-swal',
-                },
-            });
-        });
-    </script>
-    
-
+    <script src="./scriptSN.js"></script>
 </body>
 
 </html>
