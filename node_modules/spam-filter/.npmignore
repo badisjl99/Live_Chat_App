@@ -1,0 +1,9 @@
+node_modules/
+coverage/
+.directory
+.vscode/
+local-*.json
+local.json
+*.log
+.idea
+.DS_Store

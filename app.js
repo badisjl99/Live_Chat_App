@@ -90,11 +90,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
   res.sendStatus(200);
 });
 
-app.post('/audio', upload.single('audio'), (req, res) => {
-  const audioData = req.file.buffer.toString('base64');
-  io.emit('audio message', { audioData, sender: username, color, date: new Date().toISOString() });
-  res.sendStatus(200);
-});
+
 
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
