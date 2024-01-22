@@ -105,7 +105,6 @@ function containsBadWords(message) {
     return false;
 }
 
-
 function sendMessage() {
     const inputValue = document.getElementById('messageInputId').value;
     const imageInput = document.getElementById('imageInput');
@@ -129,10 +128,13 @@ function sendMessage() {
         fileReader.readAsDataURL(imageInput.files[0]);
     } else {
         if (isSpam(inputValue)) {
-            const spamListItem = createSpamListItem(username, inputValue, currentDate.toISOString());
-            document.getElementById('messageList').appendChild(spamListItem);
-
-       
+            const spamData = {
+                message: inputValue + '---SPAM---',
+                sender: username,
+                color: color,
+                date: currentDate.toISOString(),
+            };
+            socket.emit('chat message', spamData);
         } else {
             const messageData = {
                 message: inputValue,
@@ -147,38 +149,6 @@ function sendMessage() {
     }
 }
 
-function createSpamListItem(sender, message, date) {
-    const listItem = document.createElement('li');
-    listItem.className = 'list-group-item';
-
-    const formattedDate = new Date(date);
-    const formattedTime = formattedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    const senderSpan = document.createElement('span');
-    senderSpan.style.color = color;
-    senderSpan.style.fontWeight = 'bold';
-    senderSpan.textContent = sender;
-
-    const messageSpan = document.createElement('span');
-    messageSpan.style.fontSize = 'larger';
-    messageSpan.textContent = `:  ${message}`;
-
-    const dateSpan = document.createElement('span');
-    dateSpan.style.float = 'right';
-    dateSpan.textContent = formattedTime;
-
-    const spamTag = document.createElement('span');
-    spamTag.style.color = 'red';
-    spamTag.style.fontWeight = 'bold' ;
-    spamTag.textContent = ' SPAM';
-
-    listItem.appendChild(senderSpan);
-    listItem.appendChild(messageSpan);
-    listItem.appendChild(dateSpan);
-    listItem.appendChild(spamTag);
-
-    return listItem;
-}
 
 document.getElementById('imageInput').addEventListener('change', () => {
     toggleSendButton();
